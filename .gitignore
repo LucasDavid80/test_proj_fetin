@@ -1,0 +1,14 @@
+# Diretório de configuração do IDE
+.idea/
+
+# Banco de dados
+database.sqlite3
+
+# Ambiente virtual
+nome_do_ambiente/
+
+# Arquivos temporários
+*.pyc
+__pycache__/
+
+main.py
