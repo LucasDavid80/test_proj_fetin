@@ -1,21 +1,21 @@
 from flask_cors import CORS
 from flask import Flask, request, jsonify
 import pandas as pd
-import gdown
+# import gdown
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-# substitua "id_do_arquivo" pelo id do arquivo no Google Drive
-url = "https://drive.google.com/uc?id=1C0A11bIv9i_SIxADjv0zg4eiMlvpIx1j"
-output = "dataset.csv"
-gdown.download(url, output, quiet=False)
+# # substitua "id_do_arquivo" pelo id do arquivo no Google Drive
+# url = "https://drive.google.com/uc?id=1C0A11bIv9i_SIxADjv0zg4eiMlvpIx1j"
+# output = "dataset.csv"
+# gdown.download(url, output, quiet=False)
 
-# carregar o dataset CSV
-data = pd.read_csv(output)
+# # carregar o dataset CSV
+# data = pd.read_csv(output)
 
-# # carregar os dados CSV
-# data = pd.read_csv(r"dataset.csv")
+# carregar os dados CSV
+data = pd.read_csv(r"dataset.csv")
 
 '''---------------------------TREINAMENTO----------------------------------------------------------'''
 # converter valores categóricos em valores numéricos (vai ser usado no KNN)
