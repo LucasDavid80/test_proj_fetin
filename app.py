@@ -64,8 +64,7 @@ def receive_text():
 
     # Verifica se todas as perguntas foram feitas
     if estado_conversa["indice_pergunta"] < len(conversas):
-        response_text = f"{
-            conversas[estado_conversa['indice_pergunta']]} (sim/não): "
+        response_text = f"{conversas[estado_conversa['indice_pergunta']]} (sim/não): "
     else:
         # Se todas as perguntas foram respondidas, chama a função coletarRespostas
         response_text = coletar_respostas(estado_conversa["respostas"])
