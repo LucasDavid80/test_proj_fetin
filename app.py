@@ -101,8 +101,7 @@ def receive_text():
         estado_conversa["indice_pergunta"] = estado_conversa["indice_pergunta"] + 1
 
     if estado_conversa["indice_pergunta"] < 24:
-        response_text = f"{
-            conversas[estado_conversa['indice_pergunta']]} (sim/não): "
+        response_text = f"{conversas[estado_conversa['indice_pergunta']]} (sim/não): "
     else:
         response_text = coletarRespostas(estado_conversa["respostas"])
 
