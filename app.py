@@ -1,72 +1,33 @@
 from flask_cors import CORS
 from flask import Flask, request, jsonify
-import pandas as pd
-# import gdown
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+import pickle
+import numpy as np
 
-# # substitua "id_do_arquivo" pelo id do arquivo no Google Drive
-# url = "https://drive.google.com/uc?id=1C0A11bIv9i_SIxADjv0zg4eiMlvpIx1j"
-# output = "dataset.csv"
-# gdown.download(url, output, quiet=False)
+# Carregar o modelo treinado e o LabelEncoder
+with open("modelo_knn.pkl", "rb") as f:
+    modelo = pickle.load(f)
 
-# # carregar o dataset CSV
-# data = pd.read_csv(output)
+with open("label_encoder.pkl", "rb") as f:
+    convertVar = pickle.load(f)
 
-# carregar os dados CSV
-chunks = pd.read_csv(r"dataset.csv", chunksize=1000)
-data = pd.concat(chunks, ignore_index=True)
-
-'''---------------------------TREINAMENTO----------------------------------------------------------'''
-# converter valores categóricos em valores numéricos (vai ser usado no KNN)
-convertVar = LabelEncoder()
-
-# aplica LabelEncoder em todas as colunas categóricas de X
-for column in data.columns[:-1]:  # Exclui a última coluna 'Disorder'
-    data[column] = convertVar.fit_transform(data[column])
-
-# codificar a variável target (Disorder)
-data['Disorder'] = convertVar.fit_transform(data['Disorder'])
-
-# dividir os dados em features (X) e rótulos (y)
-# Todas as colunas, exceto a última (entrada)
-X = data.drop(columns=['Disorder'])
-Y = data['Disorder']  # A última coluna (saída)
-
-# divide os dados em conjunto de treino e teste
-xTreino, xTeste, yTreino, yTeste = train_test_split(
-    X, Y, test_size=0.2, random_state=42)
-
-# inicializar o modelo
-modelo = KNeighborsClassifier()
-
-# treinar o modelo
-modelo.fit(xTreino, yTreino)
-
-# avaliar o desempenho do modelo
-precisao = modelo.score(xTeste, yTeste)
-print("Precisão do modelo(KNN): {}".format(precisao))
-
-'''-------------------------------CHATBOT-----------------------------------'''
-# perguntas baseadas nas colunas do dataset
+# Perguntas baseadas no dataset
 conversas = [
-    "Olá, sou Maind sua ia para doenças mentais, pode me responder algumas perguntas (Lembrando que eu não substituo um profissional)?",
-    "Voce está se sentindo nervoso?",
-    "Voce está tendo ataques de panico?",
+    "Olá, sou Maind sua IA para doenças mentais, pode me responder algumas perguntas?",
+    "Você está se sentindo nervoso?",
+    "Você está tendo ataques de pânico?",
     "Sua respiração está rápida?",
-    "Voce está suando?",
+    "Você está suando?",
     "Está tendo problemas para se concentrar?",
-    "Está tendo dificuldades para dormir",
+    "Está tendo dificuldades para dormir?",
     "Está tendo problemas no trabalho?",
     "Você se sente sem esperança?",
-    "Você esta com raiva?",
+    "Você está com raiva?",
     "Você tende a exagerar?",
-    "Você percebe mudanças nos seus habitos alimentares?",
+    "Você percebe mudanças nos seus hábitos alimentares?",
     "Você tem pensamentos suicidas?",
     "Você se sente cansado?",
-    "Você tem um amigo proximo?",
-    "Você tem vicio em redes sociais?",
+    "Você tem um amigo próximo?",
+    "Você tem vício em redes sociais?",
     "Você ganhou peso recentemente?",
     "Você valoriza muito as posses materiais?",
     "Você se considera introvertido?",
@@ -74,12 +35,12 @@ conversas = [
     "Você tem pesadelos?",
     "Você evita pessoas ou atividades?",
     "Você está se sentindo negativo?",
-    "Está com problemas de concentraçao?",
+    "Está com problemas de concentração?",
     "Você tende a se culpar por coisas?"
 ]
 
 app = Flask(__name__)
-CORS(app)  # Habilita CORS para todas as rotas
+CORS(app)  # Habilitar CORS para todas as rotas
 
 # Estado da conversa
 estado_conversa = {
@@ -96,47 +57,47 @@ def receive_text():
 
     if text_mensage == 'sim':
         estado_conversa["respostas"].append(1)
-        estado_conversa["indice_pergunta"] = estado_conversa["indice_pergunta"] + 1
+        estado_conversa["indice_pergunta"] += 1
     elif text_mensage == 'não':
         estado_conversa["respostas"].append(0)
-        estado_conversa["indice_pergunta"] = estado_conversa["indice_pergunta"] + 1
+        estado_conversa["indice_pergunta"] += 1
 
-    if estado_conversa["indice_pergunta"] < 24:
-        response_text = f"{conversas[estado_conversa['indice_pergunta']]} (sim/não): "
+    # Verifica se todas as perguntas foram feitas
+    if estado_conversa["indice_pergunta"] < len(conversas):
+        response_text = f"{
+            conversas[estado_conversa['indice_pergunta']]} (sim/não): "
     else:
-        response_text = coletarRespostas(estado_conversa["respostas"])
+        # Se todas as perguntas foram respondidas, chama a função coletarRespostas
+        response_text = coletar_respostas(estado_conversa["respostas"])
 
-    if estado_conversa["indice_pergunta"] == "Você tende a se culpar por coisas?":
+        # Reseta o estado da conversa se necessário
         estado_conversa["indice_pergunta"] = 0
+        estado_conversa["respostas"] = []
 
     return jsonify({"response_text": response_text}), 200
 
 
-def coletarRespostas(respostas):
+def coletar_respostas(respostas):
+    # Eliminando a primeira resposta pois não é necessária no treinamento
+    respostas.pop(0)
 
-    # fazer a predição com base nas respostas do usuário
+    # Fazer a predição com base nas respostas do usuário
     predicao = modelo.predict([respostas])
 
-    # converter a predição de volta para o transtorno correspondente
-    transtornoPredito = convertVar.inverse_transform(predicao)[0]
+    # Converter a predição de volta para o transtorno correspondente
+    transtorno_predito = convertVar.inverse_transform(predicao)[0]
 
-    # Devolve com o transtorno
-    # diagnosticos
-    if transtornoPredito == 'Normal':
-        return ("Com base nas suas respostas, você pode ta suave meu parceiro")
+    # Diagnósticos com base no transtorno predito
+    diagnosticos = {
+        'Normal': "Parece que você está bem no momento. Continue cuidando de si mesmo!",
+        'Stress': "Parece que você está passando por um período de estresse. Não hesite em tirar um tempo para si ou buscar ajuda se sentir que precisa.",
+        'Loneliness': "Pode ser que você esteja se sentindo um pouco sozinho agora. Lembre-se de que conectar-se com alguém pode fazer a diferença.",
+        'Depression': "As suas respostas sugerem que você pode estar enfrentando sintomas de depressão. Falar com um profissional pode ajudar a entender melhor o que está acontecendo.",
+        'Anxiety': "Você parece estar apresentando sinais de ansiedade. Seria bom considerar falar com alguém para entender melhor esses sentimentos."
+    }
 
-    if transtornoPredito == 'Stress':
-        return ("Com base nas informações dadas voce pode estar com estresse, lembresse de procurar um profissional especializado para ter certeza!")
-
-    if transtornoPredito == 'Loneliness':
-        return ("Com base nas informacoes voce pode estar se sentindo solitário!")
-
-    if transtornoPredito == 'Depression':
-        return ("Com base nas informaçoes que voce forneceu, voce indica sintomas de depressão, procure um profissional para ter certeza que está tudo bem!")
-
-    if transtornoPredito == 'Anxiety':
-        return ("Com base nas informações que voce forneceu você parece estar com ansiedade, procure um profissional para ter certeza que está tudo bem!")
+    return diagnosticos.get(transtorno_predito, "Erro ao identificar transtorno.")
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

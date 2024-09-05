@@ -12,3 +12,5 @@ nome_do_ambiente/
 __pycache__/
 
 main.py
+treinamento.py
+dataset.csv
