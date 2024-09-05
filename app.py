@@ -15,7 +15,8 @@ from sklearn.preprocessing import LabelEncoder
 # data = pd.read_csv(output)
 
 # carregar os dados CSV
-data = pd.read_csv(r"dataset.csv")
+chunks = pd.read_csv(r"dataset.csv", chunksize=1000)
+data = pd.concat(chunks, ignore_index=True)
 
 '''---------------------------TREINAMENTO----------------------------------------------------------'''
 # converter valores categóricos em valores numéricos (vai ser usado no KNN)
