@@ -2,6 +2,7 @@ from flask_cors import CORS
 from flask import Flask, request, jsonify
 import pickle
 import numpy as np
+import uuid  # Para gerar IDs únicos de usuário
 
 # Carregar o modelo treinado e o LabelEncoder
 with open("modelo_knn.pkl", "rb") as f:
@@ -42,19 +43,44 @@ conversas = [
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para todas as rotas
 
-# Estado da conversa
-estado_conversa = {
-    'indice_pergunta': 0,
-    'respostas': []
-}
+# Estado da conversa por usuário
+usuarios = {}
+
+# Função para iniciar uma nova conversa
+def iniciar_conversa():
+    return {
+        'indice_pergunta': 0,
+        'respostas': []
+    }
+
+@app.route('/mAInd/start', methods=['POST'])
+def iniciar_conversa_usuario():
+    # Gerar um novo ID de usuário
+    user_id = str(uuid.uuid4())
+    
+    # Iniciar estado da conversa para esse usuário
+    usuarios[user_id] = iniciar_conversa()
+    
+    # Retorna a primeira pergunta junto com o ID do usuário
+    return jsonify({
+        "user_id": user_id,
+        "response_text": conversas[0] + " (sim/não): "
+    }), 200
 
 
 @app.route('/mAInd', methods=['POST'])
 def receive_text():
     data = request.get_json()
 
+    user_id = data.get('user_id')  # Recebe o ID do usuário
     text_mensage = data.get('text_mensage')
 
+    if not user_id or user_id not in usuarios: 
+        return jsonify({"error": "Usuário não encontrado"}), 400
+
+    estado_conversa = usuarios[user_id]
+ 
+    # Processar a mensagem e atualizar o estado da conversa
     if text_mensage == 'sim':
         estado_conversa["respostas"].append(1)
         estado_conversa["indice_pergunta"] += 1
@@ -69,9 +95,8 @@ def receive_text():
         # Se todas as perguntas foram respondidas, chama a função coletarRespostas
         response_text = coletar_respostas(estado_conversa["respostas"])
 
-        # Reseta o estado da conversa se necessário
-        estado_conversa["indice_pergunta"] = 0
-        estado_conversa["respostas"] = []
+        # Remove o usuário (ou você pode decidir manter um histórico)
+        usuarios.pop(user_id)
 
     return jsonify({"response_text": response_text}), 200
 
