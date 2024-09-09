@@ -47,20 +47,23 @@ CORS(app)  # Habilitar CORS para todas as rotas
 usuarios = {}
 
 # Função para iniciar uma nova conversa
+
+
 def iniciar_conversa():
     return {
         'indice_pergunta': 0,
         'respostas': []
     }
 
+
 @app.route('/mAInd/start', methods=['POST'])
 def iniciar_conversa_usuario():
     # Gerar um novo ID de usuário
     user_id = str(uuid.uuid4())
-    
+
     # Iniciar estado da conversa para esse usuário
     usuarios[user_id] = iniciar_conversa()
-    
+
     # Retorna a primeira pergunta junto com o ID do usuário
     return jsonify({
         "user_id": user_id,
@@ -75,11 +78,11 @@ def receive_text():
     user_id = data.get('user_id')  # Recebe o ID do usuário
     text_mensage = data.get('text_mensage')
 
-    if not user_id or user_id not in usuarios: 
+    if not user_id or user_id not in usuarios:
         return jsonify({"error": "Usuário não encontrado"}), 400
 
     estado_conversa = usuarios[user_id]
- 
+
     # Verifica se está na fase de diagnóstico
     if estado_conversa.get("diagnostico_feito", False):
         if text_mensage.lower() == 'sim':
@@ -104,8 +107,7 @@ def receive_text():
 
     # Verifica se todas as perguntas foram feitas
     if estado_conversa["indice_pergunta"] < len(conversas):
-        response_text = f"{
-            conversas[estado_conversa['indice_pergunta']]} (sim/não): "
+        response_text = f"{conversas[estado_conversa['indice_pergunta']]} (sim/não): "
     else:
         # Se todas as perguntas foram respondidas, chama a função coletar_respostas
         response_text = coletar_respostas(estado_conversa["respostas"])
