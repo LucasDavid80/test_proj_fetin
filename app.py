@@ -76,31 +76,43 @@ def receive_text():
     text_mensage = data.get('text_mensage')
 
     if not user_id or user_id not in usuarios: 
-        response_text = conversas[estado_conversa['indice_pergunta']]
-        return jsonify({
-            "error": "Usuário não encontrado",
-            "response_text": response_text
-                        }), 400
+        return jsonify({"error": "Usuário não encontrado"}), 400
 
     estado_conversa = usuarios[user_id]
  
+    # Verifica se está na fase de diagnóstico
+    if estado_conversa.get("diagnostico_feito", False):
+        if text_mensage.lower() == 'sim':
+            # Reiniciar o questionário
+            usuarios[user_id] = iniciar_conversa()
+            response_text = conversas[0] + " (sim/não): "
+        elif text_mensage.lower() == 'não':
+            # Remover o usuário e encerrar a conversa
+            usuarios.pop(user_id)
+            response_text = "Obrigado por participar! Se precisar de mais ajuda, estou por aqui."
+        else:
+            response_text = "Por favor, responda com 'sim' ou 'não'. Você deseja fazer o questionário novamente? (sim/não): "
+        return jsonify({"response_text": response_text}), 200
+
     # Processar a mensagem e atualizar o estado da conversa
-    if text_mensage == 'sim':
+    if text_mensage.lower() == 'sim':
         estado_conversa["respostas"].append(1)
         estado_conversa["indice_pergunta"] += 1
-    elif text_mensage == 'não':
+    elif text_mensage.lower() == 'não':
         estado_conversa["respostas"].append(0)
         estado_conversa["indice_pergunta"] += 1
 
     # Verifica se todas as perguntas foram feitas
     if estado_conversa["indice_pergunta"] < len(conversas):
-        response_text = f"{conversas[estado_conversa['indice_pergunta']]} (sim/não): "
+        response_text = f"{
+            conversas[estado_conversa['indice_pergunta']]} (sim/não): "
     else:
-        # Se todas as perguntas foram respondidas, chama a função coletarRespostas
+        # Se todas as perguntas foram respondidas, chama a função coletar_respostas
         response_text = coletar_respostas(estado_conversa["respostas"])
 
-        # Remove o usuário (ou você pode decidir manter um histórico)
-        usuarios.pop(user_id)
+        # Marcar que o diagnóstico foi feito e perguntar se o usuário deseja fazer novamente
+        estado_conversa["diagnostico_feito"] = True
+        response_text += " Você gostaria de fazer o questionário novamente? (sim/não): "
 
     return jsonify({"response_text": response_text}), 200
 
