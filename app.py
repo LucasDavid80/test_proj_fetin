@@ -76,6 +76,7 @@ def receive_text():
     text_mensage = data.get('text_mensage')
 
     if not user_id or user_id not in usuarios: 
+        response_text = conversas[estado_conversa['indice_pergunta']]
         return jsonify({
             "error": "Usuário não encontrado",
             "response_text": response_text
