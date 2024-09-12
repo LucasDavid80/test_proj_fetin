@@ -79,6 +79,8 @@ def receive_text():
     print(f'Usuário: {user_id}')
     text_mensage = data.get('text_mensage')
     print(f'text_mensage: {text_mensage}')
+    
+    print(f'Estado do dicionário usuários: {usuarios}')  # Adicionar log
 
     if not user_id or user_id not in usuarios:
         return jsonify({
