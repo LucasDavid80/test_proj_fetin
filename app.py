@@ -76,9 +76,9 @@ def receive_text():
     data = request.get_json()
 
     user_id = data.get('user_id')  # Recebe o ID do usuário
-    print('Usuário: {user_id}')
+    print(f'Usuário: {user_id}')
     text_mensage = data.get('text_mensage')
-    print('text_mensage: {text_mensage}')
+    print(f'text_mensage: {text_mensage}')
 
     if not user_id or user_id not in usuarios:
         return jsonify({
